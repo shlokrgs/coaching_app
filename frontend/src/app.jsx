@@ -16,7 +16,7 @@ import CoachUserReflectionsPage from './pages/CoachUserReflectionsPage';
 import CoachSessionCalendar from './components/CoachSessionCalendar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Spinner from './components/Spinner';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './Context/AuthContext';
 
 function App() {
   const { token, role, loading } = useAuth();
