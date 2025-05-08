@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: coaching-app
+    env: python
+    rootDir: .
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r backend/requirements.txt
+      npm install --prefix frontend
+      npm run build --prefix frontend
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://vikashdatabase_user:Vqa2O4Te0QFVioli7kabdf66BGxzKomR@dpg-d0b3ac95pdvs73caju70-a.oregon-postgres.render.com/vikashdatabase
+      - key: SECRET_KEY
+        value: rCrztHSpWwO4duYFg7MiFVkmfxAHqKD00XqC0mLKQAF8yzUPdj1XrI2rZB9AFMMN
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: VITE_API_URL
+        value: https://coaching-app-77bn.onrender.com
+      - key: OPENAI_API_KEY
+        sync: false

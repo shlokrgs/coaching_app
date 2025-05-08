@@ -1,0 +1,28 @@
+# Core framework
+fastapi==0.115.12
+uvicorn[standard]==0.34.2  # includes uvloop, httptools, watchfiles, websockets
+
+# Database
+SQLAlchemy==2.0.40
+psycopg2-binary==2.9.10
+
+# Authentication
+python-jose==3.4.0
+passlib[bcrypt]==1.7.4  # includes bcrypt
+python-dotenv==1.1.0
+email-validator==2.2.0
+
+# Pydantic and typing
+pydantic==2.11.4
+pydantic_core==2.33.2
+typing_extensions==4.13.2
+typing-inspection==0.4.0
+annotated-types==0.7.0
+
+# Multipart support for forms/file uploads
+python-multipart==0.0.20
+
+# Optional: Alembic for migrations
+alembic==1.13.1
+
+openai==1.30.1  # or the latest stable version you're using
