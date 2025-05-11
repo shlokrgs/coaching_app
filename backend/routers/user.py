@@ -3,10 +3,16 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
+from uuid import UUID
+
 from backend.database import get_db
 from backend import models, auth
-from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user
-from uuid import UUID
+from backend.auth import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    get_current_user,
+)
 
 router = APIRouter(tags=["User"])
 
@@ -47,8 +53,8 @@ def register_user(user: RegisterSchema, db: Session = Depends(get_db)):
     db_user = models.User(
         name=user.name,
         email=user.email,
-        hashed_password=hashed_pw,
-        role=user.role
+        password_hash=hashed_pw,
+        role=user.role,
     )
     db.add(db_user)
     db.commit()
@@ -56,20 +62,19 @@ def register_user(user: RegisterSchema, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 # ----------------------------
-# Login Route (expects form data)
+# Login Route
 # ----------------------------
 
 @router.post("/login", response_model=TokenOut)
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password_hash):  # ✅ FIXED
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     return {"access_token": access_token, "token_type": "bearer"}
 
-
 # ----------------------------
-# Get Current User Info
+# Current Authenticated User
 # ----------------------------
 
 @router.get("/me", response_model=UserOut)
@@ -77,11 +82,11 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 # ----------------------------
-# Get User by ID (Admin Use)
+# Get User by ID (Admin use)
 # ----------------------------
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+def get_user_by_id(user_id: UUID, db: Session = Depends(get_db)):  # ✅ UUID type fixed
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
