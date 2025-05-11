@@ -1,62 +1,106 @@
-import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
-from backend.database import engine
-from backend.db_base import Base
+function RegisterPage() {
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-# ✅ Routers
-from backend.routers import user, coach, module, admin, reflection, coach_note, session_request
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-# ✅ App Instance
-app = FastAPI(title="ALIGN Coaching Web App", version="2.0")
+  const validateForm = () => {
+    const { name, email, password } = form;
+    if (!name || !email || !password) {
+      setError('All fields are required');
+      return false;
+    }
+    return true;
+  };
 
-# ✅ CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Update with specific origins in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+  const handleRegister = async () => {
+    if (!validateForm()) return;
 
-# ✅ Register Routers
-app.include_router(user.router)
-app.include_router(coach.router)
-app.include_router(module.router)
-app.include_router(admin.router)
-app.include_router(reflection.router)
-app.include_router(coach_note.router)
-app.include_router(session_request.router)
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/user/register', form);
+      toast.success('Registration successful! Please login.');
+      navigate('/login');
+    } catch (err) {
+      const message =
+        err.response?.data?.detail ||
+        (err.response?.data && typeof err.response.data === 'string'
+          ? err.response.data
+          : 'Registration failed. Please try again.');
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-# ✅ Health Check
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-6 rounded shadow w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-center">Create Account</h2>
 
-# ✅ Auto-create DB tables in development
-if os.getenv("ENV") != "production":
-    from backend import models
-    Base.metadata.create_all(bind=engine)
+        {error && <p className="text-red-600 text-sm mb-4 text-center">{error}</p>}
 
-# ✅ Static Files (React frontend)
-static_dir = os.path.join(os.path.dirname(__file__), "static")
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
-else:
-    print(f"⚠️  Warning: Static directory '{static_dir}' not found.")
+        <input
+          type="text"
+          name="name"
+          className="w-full p-2 border rounded mb-2"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+        />
+        <input
+          type="email"
+          name="email"
+          className="w-full p-2 border rounded mb-2"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+        />
+        <input
+          type="password"
+          name="password"
+          className="w-full p-2 border rounded mb-2"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+        />
+        <select
+          name="role"
+          className="w-full p-2 border rounded mb-4"
+          value={form.role}
+          onChange={handleChange}
+        >
+          <option value="user">User</option>
+          <option value="coach">Coach</option>
+        </select>
 
-# ✅ Serve index.html at root
-@app.get("/")
-async def serve_index():
-    return FileResponse(os.path.join(static_dir, "index.html"))
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded"
+        >
+          {loading ? 'Registering...' : 'Register'}
+        </button>
 
-# ✅ Catch-all route for React Router
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
-    requested_path = os.path.join(static_dir, full_path)
-    if os.path.exists(requested_path) and os.path.isfile(requested_path):
-        return FileResponse(requested_path)
-    return FileResponse(os.path.join(static_dir, "index.html"))
+        <p className="text-sm mt-4 text-center">
+          Already have an account?{' '}
+          <a href="/login" className="text-blue-600 underline">
+            Login
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default RegisterPage;
