@@ -27,7 +27,11 @@ app.include_router(user.router, prefix="/user", tags=["User"])
 # Serve frontend static files
 app.mount("/static", StaticFiles(directory="backend/static", html=True), name="static")
 
-# Catch-all route to serve frontend index.html
-@app.get("/{full_path:path}")
-async def serve_frontend():
-    return FileResponse(os.path.join("backend/static", "index.html"))
+# Serve index.html only if file is missing from /static
+@app.get("/")
+@app.get("/{path:path}")
+async def serve_spa(path: str):
+    full_path = os.path.join("backend/static", path)
+    if os.path.exists(full_path):
+        return FileResponse(full_path)
+    return FileResponse("backend/static/index.html")
