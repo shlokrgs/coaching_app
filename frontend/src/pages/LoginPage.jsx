@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,28 +10,43 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-  try {
-    const res = await api.post(
-      '/user/login',
-      new URLSearchParams({
-        username: email,
-        password: password
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+    try {
+      const res = await api.post(
+        '/user/login',
+        new URLSearchParams({
+          username: email,
+          password: password
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         }
-      }
-    );
+      );
 
-    localStorage.setItem('token', res.data.access_token);
-    const payload = JSON.parse(atob(res.data.access_token.split('.')[1]));
-    const role = payload.role || 'user';
-    navigate(`/${role}`);
-  } catch (err) {
-    setError('Invalid email or password');
-  }
-};
+      const token = res.data.access_token;
+      localStorage.setItem('token', token);
+
+      // Decode JWT payload safely
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = payload.role || 'user';
+      const userId = payload.sub;
+
+      if (!userId) {
+        toast.error("User ID missing in token. Cannot continue.");
+        return;
+      }
+
+      // Store userId if needed
+      localStorage.setItem('userId', userId);
+
+      // Navigate to role-based route
+      navigate(`/${role}`);
+    } catch (err) {
+      console.error("Login error", err);
+      setError('Invalid email or password');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -58,7 +74,10 @@ function LoginPage() {
           Login
         </button>
         <p className="text-sm mt-4 text-center">
-          Don't have an account? <a href="/register" className="text-blue-600 underline">Register</a>
+          Don't have an account?{' '}
+          <a href="/register" className="text-blue-600 underline">
+            Register
+          </a>
         </p>
       </div>
     </div>
