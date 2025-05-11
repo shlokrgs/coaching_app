@@ -16,15 +16,14 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      api
-        .get('/user/me')
+
+      api.get('/user/me')
         .then((res) => {
-          setUserId(res.data.user_id);
-          return api.get(`/user/${res.data.user_id}`);
-        })
-        .then((res) => {
+          const { user_id, role: userRole } = res.data;
+          if (!user_id || !userRole) throw new Error('Missing user_id or role in /me response');
+          setUserId(user_id);
+          setRole(userRole);
           setToken(storedToken);
-          setRole(res.data.role);
         })
         .catch(() => {
           logout();

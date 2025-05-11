@@ -2,49 +2,42 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { useAuth } from '../Context/AuthContext';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    setError('');
+    setLoading(true);
     try {
       const res = await api.post(
         '/user/login',
         new URLSearchParams({
           username: email,
-          password: password
+          password: password,
         }),
         {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         }
       );
 
       const token = res.data.access_token;
-      localStorage.setItem('token', token);
-
-      // Decode JWT payload safely
       const payload = JSON.parse(atob(token.split('.')[1]));
       const role = payload.role || 'user';
       const userId = payload.sub;
 
-      if (!userId) {
-        toast.error("User ID missing in token. Cannot continue.");
-        return;
-      }
-
-      // Store userId if needed
-      localStorage.setItem('userId', userId);
-
-      // Navigate to role-based route
-      navigate(`/${role}`);
+      login(token, role, userId);  // Sets auth context and navigates
+      toast.success('Login successful');
     } catch (err) {
-      console.error("Login error", err);
       setError('Invalid email or password');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,26 +51,25 @@ function LoginPage() {
           className="w-full p-2 border rounded mb-2"
           placeholder="Email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           className="w-full p-2 border rounded mb-4"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button
           onClick={handleLogin}
+          disabled={loading}
           className="w-full bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}
         </button>
         <p className="text-sm mt-4 text-center">
           Don't have an account?{' '}
-          <a href="/register" className="text-blue-600 underline">
-            Register
-          </a>
+          <a href="/register" className="text-blue-600 underline">Register</a>
         </p>
       </div>
     </div>
