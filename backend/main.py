@@ -15,7 +15,7 @@ app = FastAPI(
 # Allow frontend access (adjust in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://coaching-app-77bn.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
