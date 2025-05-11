@@ -1,8 +1,10 @@
-# backend/main.py
-
+# ✅ backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import user  # Adjust if your path is different
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+from backend.routers import user
 
 app = FastAPI(
     title="ALIGN Coaching API",
@@ -10,19 +12,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allow frontend access (adjust origins for production security)
+# Allow frontend access (adjust in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://coaching-app-77bn.onrender.com"],  # Replace with exact origin(s) in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register all user-related endpoints
-app.include_router(user.router)
+# Include API routes
+app.include_router(user.router, prefix="/user", tags=["User"])
 
-# Optional health check endpoint
-@app.get("/", tags=["Root"])
-def read_root():
-    return {"message": "ALIGN Coaching API is running"}
+# Serve frontend static files
+app.mount("/static", StaticFiles(directory="backend/static", html=True), name="static")
+
+# Catch-all route to serve frontend index.html
+@app.get("/{full_path:path}")
+async def serve_frontend():
+    return FileResponse(os.path.join("backend/static", "index.html"))

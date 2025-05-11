@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Token authentication scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
@@ -40,21 +41,23 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
-# ✅ Add this function to fix the error
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+# Get current user from token
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials"
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
+    payload = decode_token(token)
+    if not payload:
         raise credentials_exception
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user_id: str = payload.get("user_id")
+    if user_id is None:
+        raise credentials_exception
+
+    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
     if user is None:
         raise credentials_exception
+
     return user
