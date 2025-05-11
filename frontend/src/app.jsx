@@ -25,7 +25,6 @@ function App() {
   if (!token) return <Navigate to="/login" />;
 
   return (
-    <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -52,7 +51,6 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
   );
 }
 
