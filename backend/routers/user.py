@@ -3,9 +3,8 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
-
 from backend.database import get_db
-from backend import models, auth
+from backend import models
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -55,14 +54,13 @@ def register_user(user: RegisterSchema, db: Session = Depends(get_db)):
 # Login Route (using form or raw JSON)
 # ----------------------------
 
-@router.post("/login", response_model=TokenOut)
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    token = auth.create_access_token(data={"sub": user.email, "user_id": user.id, "role": user.role})
-    return {"access_token": token}
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token = create_access_token({"sub": user.id, "role": user.role})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 # ----------------------------
 # Get Current User ID from JWT

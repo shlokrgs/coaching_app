@@ -9,20 +9,28 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    try {
-      const res = await api.post('/user/login', new URLSearchParams({
+  try {
+    const res = await api.post(
+      '/user/login',
+      new URLSearchParams({
         username: email,
         password: password
-      }));
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
 
-      localStorage.setItem('token', res.data.access_token);
-      const payload = JSON.parse(atob(res.data.access_token.split('.')[1]));
-      const role = payload.role || 'user';
-      navigate(`/${role}`);
-    } catch (err) {
-      setError('Invalid email or password');
-    }
-  };
+    localStorage.setItem('token', res.data.access_token);
+    const payload = JSON.parse(atob(res.data.access_token.split('.')[1]));
+    const role = payload.role || 'user';
+    navigate(`/${role}`);
+  } catch (err) {
+    setError('Invalid email or password');
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
