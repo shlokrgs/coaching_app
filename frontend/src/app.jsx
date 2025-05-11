@@ -1,10 +1,10 @@
-// App.jsx
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from 'react-router-dom';
+
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardUser from './pages/DashboardUser';
@@ -20,37 +20,52 @@ import { useAuth } from './Context/AuthContext';
 
 function App() {
   const { token, role, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) return <Spinner />;
-  if (!token) return <Navigate to="/login" />;
 
   return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<Navigate to={`/${role}`} />} />
+    <Routes>
+      {/* Public routes */}
+      {!token && (
+        <>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+      )}
 
-        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-          <Route path="/admin" element={<DashboardAdmin />} />
-        </Route>
+      {/* Authenticated routes */}
+      {token && (
+        <>
+          <Route path="/" element={<Navigate to={`/${role}`} replace />} />
 
-        <Route element={<ProtectedRoute allowedRoles={["coach"]} />}>
-          <Route path="/coach" element={<DashboardCoach />} />
-          <Route path="/coach/users/:userId/reflections" element={<CoachUserReflectionsPage />} />
-          <Route path="/sessions/calendar" element={<CoachSessionCalendar />} />
-        </Route>
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route path="/admin" element={<DashboardAdmin />} />
+          </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
-          <Route path="/user" element={<DashboardUser />} />
-          <Route path="/reflections" element={<ReflectionsPage />} />
-        </Route>
+          <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
+            <Route path="/coach" element={<DashboardCoach />} />
+            <Route
+              path="/coach/users/:userId/reflections"
+              element={<CoachUserReflectionsPage />}
+            />
+            <Route path="/sessions/calendar" element={<CoachSessionCalendar />} />
+          </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["user", "coach", "admin"]} />}>
-          <Route path="/toolkits" element={<ToolkitsPage />} />
-        </Route>
+          <Route element={<ProtectedRoute allowedRoles={['user']} />}>
+            <Route path="/user" element={<DashboardUser />} />
+            <Route path="/reflections" element={<ReflectionsPage />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+          <Route element={<ProtectedRoute allowedRoles={['user', 'coach', 'admin']} />}>
+            <Route path="/toolkits" element={<ToolkitsPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to={`/${role}`} replace />} />
+        </>
+      )}
+    </Routes>
   );
 }
 

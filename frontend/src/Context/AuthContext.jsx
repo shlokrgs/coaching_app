@@ -1,4 +1,4 @@
-// src/context/AuthContext.jsx
+// src/Context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -16,7 +16,8 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      api.get('/user/me')
+      api
+        .get('/user/me')
         .then((res) => {
           setUserId(res.data.user_id);
           return api.get(`/user/${res.data.user_id}`);
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     setToken(token);
     setRole(userRole);
     setUserId(userId);
+    navigate(`/${userRole}`);
   };
 
   const logout = () => {
