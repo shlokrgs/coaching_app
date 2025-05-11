@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 from backend.database import get_db
 from backend import models
+from backend import auth
 
 router = APIRouter(prefix="/user", tags=["User"])
 
