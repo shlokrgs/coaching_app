@@ -4,13 +4,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 from backend.database import get_db
-from backend import models
-from backend import auth
+from backend import models, auth
+from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/user", tags=["User"])
 
 # ----------------------------
-# Pydantic Schemas
+# Schemas
 # ----------------------------
 
 class RegisterSchema(BaseModel):
@@ -39,7 +39,7 @@ def register_user(user: RegisterSchema, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_pw = auth.get_password_hash(user.password)
+    hashed_pw = get_password_hash(user.password)
     db_user = models.User(
         name=user.name,
         email=user.email,
@@ -52,27 +52,28 @@ def register_user(user: RegisterSchema, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 # ----------------------------
-# Login Route (using form or raw JSON)
+# Login Route (expects form data)
 # ----------------------------
 
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/login", response_model=TokenOut)
+def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token({"sub": user.id, "role": user.role})
+
+    access_token = create_access_token(data={"sub": user.id, "role": user.role})
     return {"access_token": access_token, "token_type": "bearer"}
 
 # ----------------------------
-# Get Current User ID from JWT
+# Get Current User Info
 # ----------------------------
 
-@router.get("/me")
-def get_current_user_id(current_user: models.User = Depends(auth.get_current_user)):
-    return {"user_id": current_user.id}
+@router.get("/me", response_model=UserOut)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
 
 # ----------------------------
-# Get Full User by ID
+# Get User by ID (Admin Use)
 # ----------------------------
 
 @router.get("/{user_id}", response_model=UserOut)
