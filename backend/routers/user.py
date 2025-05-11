@@ -6,6 +6,7 @@ from typing import Optional
 from backend.database import get_db
 from backend import models, auth
 from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user
+from uuid import UUID
 
 router = APIRouter(tags=["User"])
 
@@ -20,10 +21,13 @@ class RegisterSchema(BaseModel):
     role: Optional[str] = "user"
 
 class UserOut(BaseModel):
-    id: int
+    id: UUID
     name: str
     email: str
     role: str
+
+    class Config:
+        orm_mode = True
 
 class TokenOut(BaseModel):
     access_token: str
