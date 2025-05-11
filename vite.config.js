@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
 export default defineConfig({
-  root: 'frontend', // ✅ No './' here
+  root: path.resolve(__dirname, 'frontend'),
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,10 +11,10 @@ export default defineConfig({
     },
   },
   css: {
-    postcss: path.resolve(__dirname, 'postcss.config.js'), // ✅ Also no './' needed
+    postcss: path.resolve(__dirname, 'postcss.config.js'),
   },
   build: {
-    outDir: path.resolve(__dirname, 'backend/static'), // ✅ Absolute to avoid render issues
+    outDir: path.resolve(__dirname, 'backend/static'), // This folder will be created by Vite
     emptyOutDir: true,
   },
   server: {
