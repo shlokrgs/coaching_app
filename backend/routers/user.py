@@ -7,7 +7,7 @@ from backend.database import get_db
 from backend import models, auth
 from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
-router = APIRouter(prefix="/user", tags=["User"])
+router = APIRouter(tags=["User"])
 
 # ----------------------------
 # Schemas
