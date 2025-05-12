@@ -1,4 +1,4 @@
-// CoachUserReflectionsPage.jsx
+// ✅ CoachUserReflectionsPage.jsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
@@ -12,14 +12,21 @@ function CoachUserReflectionsPage() {
   const [userInfo, setUserInfo] = useState(null);
 
   const loadReflections = async () => {
-    const [ref, notes, user] = await Promise.all([
-      api.get(`/coach/user-reflections/${userId}`),
-      api.get(`/coach-notes/user/${userId}`),
-      api.get(`/user/${userId}`)
-    ]);
-    setReflections(ref.data);
-    setCoachNotes(notes.data);
-    setUserInfo(user.data);
+    try {
+      const [ref, notes, user] = await Promise.all([
+        api.get(`/coach/user-reflections/${userId}`),
+        api.get(`/coach-notes/user/${userId}`),
+        api.get(`/user/${userId}`)
+      ]);
+
+      setReflections(Array.isArray(ref.data) ? ref.data : []);
+      setCoachNotes(Array.isArray(notes.data) ? notes.data : []);
+      setUserInfo(user.data);
+    } catch (err) {
+      console.error('Failed to load reflections or notes:', err);
+      setReflections([]);
+      setCoachNotes([]);
+    }
   };
 
   useEffect(() => {
@@ -54,11 +61,7 @@ function CoachUserReflectionsPage() {
                       💡 AI Feedback: {r.ai_feedback}
                     </div>
                   )}
-                  <CoachNotePanel
-                    reflectionId={r.id}
-                    existingNote={note}
-                    reloadNotes={loadReflections}
-                  />
+                  <CoachNotePanel reflectionId={r.id} existingNote={note} reloadNotes={loadReflections} />
                 </li>
               );
             })}

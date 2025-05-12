@@ -1,4 +1,4 @@
-// ToolkitsPage.jsx
+// ✅ ToolkitsPage.jsx
 import Layout from '../components/Layout';
 import { useEffect, useState } from 'react';
 import api from '../services/api';
@@ -7,7 +7,16 @@ function ToolkitsPage() {
   const [tools, setTools] = useState([]);
 
   useEffect(() => {
-    api.get('/module/toolkits').then((res) => setTools(res.data));
+    api.get('/module/toolkits')
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          setTools(res.data);
+        } else {
+          console.error('Invalid toolkits response:', res.data);
+          setTools([]);
+        }
+      })
+      .catch(() => setTools([]));
   }, []);
 
   return (
@@ -18,12 +27,7 @@ function ToolkitsPage() {
           <div key={tool.title} className="border p-4 rounded bg-white shadow">
             <h3 className="font-semibold">{tool.title}</h3>
             <p className="text-sm text-gray-600">{tool.description}</p>
-            <a
-              href={tool.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 text-sm underline"
-            >
+            <a href={tool.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm underline">
               Open
             </a>
           </div>

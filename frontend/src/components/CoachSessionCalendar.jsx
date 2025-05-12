@@ -1,4 +1,4 @@
-// -- CoachSessionCalendar.jsx --
+// ✅ CoachSessionCalendar.jsx
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useEffect, useState } from 'react';
@@ -17,15 +17,22 @@ function CoachSessionCalendar() {
   const [filterDate, setFilterDate] = useState('');
 
   const loadSessions = async () => {
-    const res = await api.get('/sessions/assigned');
-    const sessions = res.data.map(session => ({
-      id: session.id,
-      title: `🧑 ${session.user_id} (${session.status})${session.link ? ' 📎' : ''}`,
-      start: parseISO(session.requested_at),
-      end: parseISO(session.requested_at),
-      status: session.status,
-    }));
-    setEvents(sessions);
+    try {
+      const res = await api.get('/sessions/assigned');
+      const sessions = Array.isArray(res.data)
+        ? res.data.map(session => ({
+            id: session.id,
+            title: `🧑 ${session.user_id} (${session.status})${session.link ? ' 📌' : ''}`,
+            start: parseISO(session.requested_at),
+            end: parseISO(session.requested_at),
+            status: session.status,
+          }))
+        : [];
+      setEvents(sessions);
+    } catch (err) {
+      console.error('Error loading sessions:', err);
+      setEvents([]);
+    }
   };
 
   useEffect(() => {
@@ -41,12 +48,12 @@ function CoachSessionCalendar() {
       link: ['approve', 'reject'].includes(action) ? null : action,
     };
 
-    api.patch(`/sessions/${event.id}`, payload).then(() => {
-      toast.success('✅ Session updated');
-      loadSessions();
-    }).catch(() => {
-      toast.error('❌ Update failed');
-    });
+    api.patch(`/sessions/${event.id}`, payload)
+      .then(() => {
+        toast.success('✅ Session updated');
+        loadSessions();
+      })
+      .catch(() => toast.error('❌ Update failed'));
   };
 
   const filteredEvents = events.filter(e =>
