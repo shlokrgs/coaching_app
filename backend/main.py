@@ -4,7 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
-from backend.routers import user
+# ✅ Import all routers
+from backend.routers import user, reflection, module
 
 app = FastAPI(
     title="ALIGN Coaching API",
@@ -12,23 +13,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS
+# ✅ CORS configuration for cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ⚠️ Restrict in production
+    allow_origins=["*"],  # ⚠️ In production, restrict to your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve static files (JS/CSS from Vite build)
+# ✅ Serve static assets (from frontend Vite build)
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
 
-# Include routers
+# ✅ Register API routers
 app.include_router(user.router, prefix="/user", tags=["User"])
+app.include_router(reflection.router, prefix="/reflections", tags=["Reflections"])
+app.include_router(module.router, prefix="/module", tags=["Module"])
 
-# Serve index.html for any non-API route (e.g., /dashboard, /login)
+# ✅ Serve frontend index.html for all unknown routes (SPA fallback)
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_frontend():
     index_file = static_dir / "index.html"
